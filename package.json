@@ -1,0 +1,15 @@
+{
+  "name": "devtinder-backend",
+  "version": "1.0.0",
+  "description": "This project is to learn node js",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chandan Kumar",
+  "license": "ISC",
+  "dependencies": {
+    "devtinder-backend": "file:",
+    "express": "^4.21.1"
+  }
+}

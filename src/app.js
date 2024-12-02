@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const { adminAuth } = require("./middlewares/auth");
 
 // app.use((req, res) =>{
 //     res.send("Hello Welcome, to BuzzCabs");
@@ -30,20 +31,36 @@ const app = express();
 //     res.send({firstname: "Chandan Kumar", lastname: "Kumar"});
 // });
 
-app.use(
-  "/user",
-  (req, res, next) => { 
-    console.log("Handling the route user 1")
-    // res.send("Response 1!!");
-    // here using next argumnents we can redirect the res to the next res if first res is not cathed
-    next();
-  },
-  (req, res, next) => {
-    console.log("Handling the route user 2")
-    // res.send("Response 2!!");
-    next();
-  } 
-);
+// app.use(
+//   "/user",
+//   (req, res, next) => {
+//     console.log("Handling the route user 1")
+//     // res.send("Response 1!!");
+//     // here using next argumnents we can redirect the res to the next res if first res is not cathed
+//     next();
+//   },
+//   (req, res, next) => {
+//     console.log("Handling the route user 2")
+//     // res.send("Response 2!!");
+//     next();
+//   }
+// );
+
+// Handle Auth Middleware for all requests like GET, POST, DELETE....
+app.use("/admin", adminAuth);
+
+app.get("/admin/getAllData", (req, res) => {
+  res.send({ firstname: "Chandan Kumar", lastname: "Kumar" });
+});
+
+app.get("/admin/deleteUser", (req, res) => {
+  res.send("user deleted!!");
+});
+
+// Here /user work but admin auth is not get checked and show the user data not the admin data
+app.get("/user", (req, res) => {
+  res.send({ firstname: "Chandan Kumar", lastname: "Kumar" });
+});
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

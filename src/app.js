@@ -47,19 +47,27 @@ const { adminAuth } = require("./middlewares/auth");
 // );
 
 // Handle Auth Middleware for all requests like GET, POST, DELETE....
-app.use("/admin", adminAuth);
+// app.use("/admin", adminAuth);
 
-app.get("/admin/getAllData", (req, res) => {
-  res.send({ firstname: "Chandan Kumar", lastname: "Kumar" });
-});
+// app.get("/admin/getAllData", (req, res) => {
+//   res.send({ firstname: "Chandan Kumar", lastname: "Kumar" });
+// });
 
-app.get("/admin/deleteUser", (req, res) => {
-  res.send("user deleted!!");
-});
+// app.get("/admin/deleteUser", (req, res) => {
+//   res.send("user deleted!!");
+// });
 
 // Here /user work but admin auth is not get checked and show the user data not the admin data
 app.get("/user", (req, res) => {
+  throw new Error("dddghsnsk");
   res.send({ firstname: "Chandan Kumar", lastname: "Kumar" });
+});
+
+// error handling and always use this in the last 
+app.use("/", (err, req, res, next) => {
+  if (err) {
+    res.status(500).send("something went wrong");
+  }
 });
 
 app.listen(3000, () => {

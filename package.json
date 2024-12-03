@@ -5,12 +5,13 @@
   "main": "app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev":"nodemon src/app.js"
+    "dev": "nodemon src/app.js"
   },
   "author": "Chandan Kumar",
   "license": "ISC",
   "dependencies": {
     "devtinder-backend": "file:",
-    "express": "^4.21.1"
+    "express": "^4.21.1",
+    "mongoose": "^8.8.3"
   }
 }

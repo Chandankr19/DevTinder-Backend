@@ -1,75 +1,46 @@
 const express = require("express");
 const app = express();
-const { adminAuth } = require("./middlewares/auth");
+const connectDB = require("./config/database");
+const User = require("./models/user");
+const user = require("./models/user");
 
-// app.use((req, res) =>{
-//     res.send("Hello Welcome, to BuzzCabs");
-// });
+// API to add the user into database
+app.post("/signup", async (req, res) => {
+  const user = new User({
+    firstName: "Ashish",
+    lastName: "Kumar",
+    emailId: "ashishkumar@gamil.com",
+    password: "ashishkr@12",
+    age: 26,
+    gender: "male",
+  });
 
-// work for /ac, /abc due to ? sign. Here b is optional
-// app.get("/ab?c", (req, res) =>{
-//     res.send({firstname: "Chandan Kumar", lastname: "Kumar"});
-// });
-
-// // work for /abc, /abbc, /abbb...c due to + sign
-// app.get("/ab+c", (req, res) =>{
-//     res.send({firstname: "Chandan Kumar", lastname: "Kumar"});
-// });
-
-// // work for /abcd and ab....cd it will work due to * sign
-// app.get("/ab*c", (req, res) =>{
-//     res.send({firstname: "Chandan Kumar", lastname: "Kumar"});
-// });
-
-// // anything that will end with fly it will work
-// app.get("/.*fly$/", (req, res) =>{
-//     res.send({firstname: "Chandan Kumar", lastname: "Kumar"});
-// });
-
-// app.get("/user/:userId", (req, res) =>{
-//     console.log(req.params);
-//     res.send({firstname: "Chandan Kumar", lastname: "Kumar"});
-// });
-
-// app.use(
-//   "/user",
-//   (req, res, next) => {
-//     console.log("Handling the route user 1")
-//     // res.send("Response 1!!");
-//     // here using next argumnents we can redirect the res to the next res if first res is not cathed
-//     next();
-//   },
-//   (req, res, next) => {
-//     console.log("Handling the route user 2")
-//     // res.send("Response 2!!");
-//     next();
-//   }
-// );
-
-// Handle Auth Middleware for all requests like GET, POST, DELETE....
-// app.use("/admin", adminAuth);
-
-// app.get("/admin/getAllData", (req, res) => {
-//   res.send({ firstname: "Chandan Kumar", lastname: "Kumar" });
-// });
-
-// app.get("/admin/deleteUser", (req, res) => {
-//   res.send("user deleted!!");
-// });
-
-// Here /user work but admin auth is not get checked and show the user data not the admin data
-app.get("/user", (req, res) => {
-  throw new Error("dddghsnsk");
-  res.send({ firstname: "Chandan Kumar", lastname: "Kumar" });
-});
-
-// error handling and always use this in the last 
-app.use("/", (err, req, res, next) => {
-  if (err) {
-    res.status(500).send("something went wrong");
+  try {
+    const savedUser = await user.save();
+    res.send("User added successfully!!");
+  } catch (err) {
+    res.status(400).send("Error saving the user: " + err.message);
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+// API to get user data from database
+app.get("/users", async (req, res) => {
+  try {
+    const users = await User.find();
+    // res.send(users);
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).send("Error retrieving users: " + err.message);
+  }
 });
+
+connectDB()
+  .then(() => {
+    console.log("Database connected to MongoDB....");
+    app.listen(3000, () => {
+      console.log("Server is running on port 3000");
+    });
+  })
+  .catch((err) => {
+    console.error("Database is not connected!!");
+  });

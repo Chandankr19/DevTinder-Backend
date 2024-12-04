@@ -74,16 +74,36 @@ app.delete("/user/:id", async (req, res) => {
 // API to update the user by userId
 app.patch("/user/:id", async (req, res) => {
   try {
-    const userId = req.params.id; // Extract the user ID from the URL parameters
+    const userId = req.params?.id; // Extract the user ID from the URL parameters
     const updates = req.body; // Extract the fields to update from the request body
 
+    // Strict check that only allowed fields can be updated
+    const ALLOWED_UPDATES = [
+      "userId",
+      "photoUrl",
+      "about",
+      "gender",
+      "age",
+      "skills",
+    ];
+
+    const isUpdatedAllowed = Object.keys(updates).every((k) =>
+      ALLOWED_UPDATES.includes(k)
+    );
+    if (!isUpdatedAllowed) {
+      throw new Error("Invalid update fields");
+    }
+
+    if(updates?.skills.length > 10){
+      throw new Error("Skills cannot be more than 10");
+    }
     // Using findByIdAndUpdate to find and update the user
     const updatedUser = await User.findByIdAndUpdate(
       userId, // find user by ID
       updates, // Update fields provided in the request body
       {
         returnDocument: "after", // Return the updated document
-        runValidators: true,    // validate the gender fields 
+        runValidators: true, // validate the gender fields
       }
       // { new: true }, // It will also returned the updated documents
     );

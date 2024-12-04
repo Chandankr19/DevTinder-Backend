@@ -81,8 +81,11 @@ app.patch("/user/:id", async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId, // find user by ID
       updates, // Update fields provided in the request body
-      { returnDocument: "after" }  // Return the updated document
-      // { new: true } // It will also returned the updated documents
+      {
+        returnDocument: "after", // Return the updated document
+        runValidators: true,    // validate the gender fields 
+      }
+      // { new: true }, // It will also returned the updated documents
     );
 
     if (updatedUser) {

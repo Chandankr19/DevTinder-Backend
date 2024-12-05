@@ -10,6 +10,7 @@
   "author": "Chandan Kumar",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "devtinder-backend": "file:",
     "express": "^4.21.1",
     "mongoose": "^8.8.3",

@@ -2,29 +2,37 @@ const express = require("express");
 const app = express();
 const connectDB = require("./config/database");
 const User = require("./models/user");
+const { validateSignUpData } = require("./helpers/validation");
+const passwordEncryption = require("./helpers/passEncryption");
 
 // Middleware to parse JSON data
 app.use(express.json());
 
 // API to add the user into database
 app.post("/signup", async (req, res) => {
-  // creating a new instance of the User model
-  // const user = new User({
-  //   firstName: req.body.firstName,
-  //   lastName: req.body.lastName,
-  //   emailId: req.body.emailId,
-  //   password: req.body.password,
-  //   age: req.body.age,
-  //   gender: req.body.gender,
-  // });
-
-  // instead of above we can directly pass the Data to the database
-  const user = new User(req.body);
   try {
+    //VALIDATE THE DATA
+    validateSignUpData(req);
+    const { firstName, lastName, emailId, age, gender, photoUrl, skills } =
+      req.body;
+    //ENCRYPT THE PASSWORD
+    const passwordHash = await passwordEncryption(req);
+    // Creating a new instance of the user model
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+      age,
+      gender,
+      photoUrl,
+      skills,
+    });
+
     const savedUser = await user.save();
     res.send("User added successfully!!");
   } catch (err) {
-    res.status(400).send("Error saving the user: " + err.message);
+    res.status(400).send("ERROR: " + err.message);
   }
 });
 
@@ -76,7 +84,7 @@ app.patch("/user/:id", async (req, res) => {
   try {
     const userId = req.params?.id; // Extract the user ID from the URL parameters
     const updates = req.body; // Extract the fields to update from the request body
-
+    console.log(updates.gender);
     // Strict check that only allowed fields can be updated
     const ALLOWED_UPDATES = [
       "userId",
@@ -87,16 +95,17 @@ app.patch("/user/:id", async (req, res) => {
       "skills",
     ];
 
+    console.log(updates.gender);
     const isUpdatedAllowed = Object.keys(updates).every((k) =>
       ALLOWED_UPDATES.includes(k)
     );
     if (!isUpdatedAllowed) {
       throw new Error("Invalid update fields");
     }
-
-    if(updates?.skills.length > 10){
+    if (updates?.skills && updates.skills.length > 10) {
       throw new Error("Skills cannot be more than 10");
     }
+
     // Using findByIdAndUpdate to find and update the user
     const updatedUser = await User.findByIdAndUpdate(
       userId, // find user by ID
@@ -107,7 +116,6 @@ app.patch("/user/:id", async (req, res) => {
       }
       // { new: true }, // It will also returned the updated documents
     );
-
     if (updatedUser) {
       res.status(200).send(updatedUser);
     } else {
@@ -118,6 +126,16 @@ app.patch("/user/:id", async (req, res) => {
   }
 });
 
+// DANGER!
+// API to delete all user at once
+app.delete("/users", async (req, res) => {
+  try {
+    const deleteAll = await User.deleteMany({});
+    res.status(200).send(`Deleted ${deleteAll.deletedCount} users.`);
+  } catch (err) {
+    res.status(500).send(`Error deleting users: ${err.message}`);
+  }
+});
 connectDB()
   .then(() => {
     console.log("Database connected to MongoDB....");

@@ -5,9 +5,11 @@ const User = require("./models/user");
 const { validateSignUpData } = require("./helpers/validation");
 const passwordEncryption = require("./helpers/passEncryption");
 const bcrypt = require("bcrypt");
-
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 // Middleware to parse JSON data
 app.use(express.json());
+app.use(cookieParser());
 
 // API to add the user into database
 app.post("/signup", async (req, res) => {
@@ -139,27 +141,54 @@ app.delete("/users", async (req, res) => {
 });
 
 // USER LOGIN API
-app.post("/login", async (req, res) =>{
-  try{
-    const {emailId, password} = req.body;
-    const user = await User.findOne({emailId: emailId});
-   
-    if(!user){
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    const user = await User.findOne({ emailId: emailId });
+
+    if (!user) {
       return res.status(401).send("Invalid credentials!!");
     }
     const isValidPassword = await bcrypt.compare(password, user.password);
 
-    if(isValidPassword){
-      res.status(200).send("User logged in successfully");
-    }else{
+    if (isValidPassword) {
+      // Create a JWT Token
+      const token = await jwt.sign({ _id: user._id }, "ASPEN@Tinder$1920");
+    
+      // Add the token to cookie and send the response back to the user
+      res.cookie("token", token);
+      res.status(200).send("Logged in successfully");
+    } else {
       res.status(401).send("Invalid credentials!!");
     }
-
-  }catch(err){
+  } catch (err) {
     res.status(500).send(`Error logging in user: ${err.message}`);
   }
 });
 
+// USER PROFILE
+app.get("/profile", async (req, res) => {
+  try {
+    //Read the cookie
+    const cookies = req.cookies;
+    const { token } = cookies;
+    if (!token) {
+      throw new Error("Invalid Token");
+    }
+
+    //Validate the token
+    const decodedMessage = await jwt.verify(token, "ASPEN@Tinder$1920");
+    const { _id } = decodedMessage;
+    const user = await User.findById(_id);
+    if (!user) {
+      throw new Error("Please login again!!");
+    }
+    // console.log("Logged In user is: " + _id);
+    res.status(200).send(user);
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
+  }
+});
 connectDB()
   .then(() => {
     console.log("Database connected to MongoDB....");

@@ -7,6 +7,8 @@ const passwordEncryption = require("./helpers/passEncryption");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const {userAuth} = require("./middlewares/auth");
+
 // Middleware to parse JSON data
 app.use(express.json());
 app.use(cookieParser());
@@ -39,107 +41,6 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-// API to get all the users  from database
-app.get("/users", async (req, res) => {
-  try {
-    const userAll = await User.find();
-
-    // res.send(users);
-    res.status(200).json(userAll);
-  } catch (err) {
-    res.status(500).send("Error retrieving users: " + err.message);
-  }
-});
-
-// API to get  user from their emailId
-app.get("/userByEmail", async (req, res) => {
-  try {
-    const userEmail = req.body.emailId;
-    const users = await User.find({ emailId: userEmail });
-    if (users.length === 0) {
-      res.status(404).send("User not found");
-    } else {
-      res.status(200).json(users);
-    }
-  } catch (err) {
-    res.status(500).send("Error while retrieving user: " + err.message);
-  }
-});
-
-//API to delete the user by userId from database
-app.delete("/user/:id", async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const deletedUser = await User.findByIdAndDelete(userId);
-
-    if (deletedUser) {
-      res.status(200).send(`User with ID ${userId} has been deleted`);
-    } else {
-      res.status(404).send(`User with ID ${userId} not found`);
-    }
-  } catch (err) {
-    res.status(500).send(`Error deleting user: ${err.message}`);
-  }
-});
-
-// API to update the user by userId
-app.patch("/user/:id", async (req, res) => {
-  try {
-    const userId = req.params?.id; // Extract the user ID from the URL parameters
-    const updates = req.body; // Extract the fields to update from the request body
-    console.log(updates.gender);
-    // Strict check that only allowed fields can be updated
-    const ALLOWED_UPDATES = [
-      "userId",
-      "photoUrl",
-      "about",
-      "gender",
-      "age",
-      "skills",
-    ];
-
-    console.log(updates.gender);
-    const isUpdatedAllowed = Object.keys(updates).every((k) =>
-      ALLOWED_UPDATES.includes(k)
-    );
-    if (!isUpdatedAllowed) {
-      throw new Error("Invalid update fields");
-    }
-    if (updates?.skills && updates.skills.length > 10) {
-      throw new Error("Skills cannot be more than 10");
-    }
-
-    // Using findByIdAndUpdate to find and update the user
-    const updatedUser = await User.findByIdAndUpdate(
-      userId, // find user by ID
-      updates, // Update fields provided in the request body
-      {
-        returnDocument: "after", // Return the updated document
-        runValidators: true, // validate the gender fields
-      }
-      // { new: true }, // It will also returned the updated documents
-    );
-    if (updatedUser) {
-      res.status(200).send(updatedUser);
-    } else {
-      res.status(404).send(`User with ID ${userId} not found`);
-    }
-  } catch (err) {
-    res.status(500).send(`Error updating user: ${err.message}`);
-  }
-});
-
-// DANGER!
-// API to delete all user at once
-app.delete("/users", async (req, res) => {
-  try {
-    const deleteAll = await User.deleteMany({});
-    res.status(200).send(`Deleted ${deleteAll.deletedCount} users.`);
-  } catch (err) {
-    res.status(500).send(`Error deleting users: ${err.message}`);
-  }
-});
-
 // USER LOGIN API
 app.post("/login", async (req, res) => {
   try {
@@ -153,10 +54,10 @@ app.post("/login", async (req, res) => {
 
     if (isValidPassword) {
       // Create a JWT Token
-      const token = await jwt.sign({ _id: user._id }, "ASPEN@Tinder$1920");
+      const token = await jwt.sign({ _id: user._id }, "ASPEN@Tinder$1920", {expiresIn: "1d"});
     
       // Add the token to cookie and send the response back to the user
-      res.cookie("token", token);
+      res.cookie("token", token, {expires: new Date(Date.now() + 8 * 3600000)});
       res.status(200).send("Logged in successfully");
     } else {
       res.status(401).send("Invalid credentials!!");
@@ -166,24 +67,18 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// USER PROFILE
-app.get("/profile", async (req, res) => {
-  try {
-    //Read the cookie
-    const cookies = req.cookies;
-    const { token } = cookies;
-    if (!token) {
-      throw new Error("Invalid Token");
-    }
+// Send Connection Request
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  const user = req.user;
+  // Sending connection request
+  res.send(`${user.firstName} ${user.lastName} sent the connection request.....`)
+});
 
-    //Validate the token
-    const decodedMessage = await jwt.verify(token, "ASPEN@Tinder$1920");
-    const { _id } = decodedMessage;
-    const user = await User.findById(_id);
-    if (!user) {
-      throw new Error("Please login again!!");
-    }
-    // console.log("Logged In user is: " + _id);
+// USER PROFILE
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+
     res.status(200).send(user);
   } catch (err) {
     res.status(400).send("ERROR: " + err.message);

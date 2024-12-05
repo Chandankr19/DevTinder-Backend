@@ -4,6 +4,7 @@ const connectDB = require("./config/database");
 const User = require("./models/user");
 const { validateSignUpData } = require("./helpers/validation");
 const passwordEncryption = require("./helpers/passEncryption");
+const bcrypt = require("bcrypt");
 
 // Middleware to parse JSON data
 app.use(express.json());
@@ -136,6 +137,29 @@ app.delete("/users", async (req, res) => {
     res.status(500).send(`Error deleting users: ${err.message}`);
   }
 });
+
+// USER LOGIN API
+app.post("/login", async (req, res) =>{
+  try{
+    const {emailId, password} = req.body;
+    const user = await User.findOne({emailId: emailId});
+   
+    if(!user){
+      return res.status(401).send("Invalid credentials!!");
+    }
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if(isValidPassword){
+      res.status(200).send("User logged in successfully");
+    }else{
+      res.status(401).send("Invalid credentials!!");
+    }
+
+  }catch(err){
+    res.status(500).send(`Error logging in user: ${err.message}`);
+  }
+});
+
 connectDB()
   .then(() => {
     console.log("Database connected to MongoDB....");

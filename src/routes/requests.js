@@ -107,7 +107,7 @@ requestRouter.post(
           message: `${loggedInUser.firstName} already rejected your connection request!!`,
         });
       }
-      
+
       connectionRequest.status = status;
       const updatedRequest = await connectionRequest.save();
       if (status === "accepted") {

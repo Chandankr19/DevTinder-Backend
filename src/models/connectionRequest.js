@@ -5,9 +5,11 @@ const connectionRequestSchema = new mongoose.Schema(
     toUserId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: "User",
     },
     fromUserId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     status: {
@@ -23,7 +25,7 @@ const connectionRequestSchema = new mongoose.Schema(
 );
 
 // Compound indexing of mongoose to fast the search query on connectionRequest
-connectionRequestSchema.index({ fromUserId:1, toUserId:1 });
+connectionRequestSchema.index({ fromUserId: 1, toUserId: 1 });
 
 connectionRequestSchema.pre("save", function (next) {
   const connectionRequest = this;

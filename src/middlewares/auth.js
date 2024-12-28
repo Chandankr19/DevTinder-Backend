@@ -14,7 +14,10 @@ const userAuth = async (req, res, next) => {
     const decodedObj = await jwt.verify(token, "ASPEN@Tinder$1920");
     const { _id } = decodedObj;
 
+    console.log(decodedObj);
+
     const user = await User.findById(_id);
+
     if (!user) {
       throw new Error("User does not exist!");
     }
